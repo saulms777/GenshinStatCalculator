@@ -1,6 +1,6 @@
 # character functions
 def accessCharacters():
-    with open(f"CharacterData\\CharacterStats.txt") as file:
+    with open("CharacterData\\CharacterStats.txt") as file:
         file = file.read().split("\n")
         rawInfo = [character.split(" | ") for character in file]
 
