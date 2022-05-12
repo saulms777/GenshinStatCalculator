@@ -27,7 +27,7 @@ def accessCharacterMultipliers():
         return dict(zip(level, tuple(zip(fourStar, fiveStar))))
 
 
-def selectChar():
+def selectCharacter():
     while True:
         character = input("Select a character: ")
         try:
@@ -38,7 +38,7 @@ def selectChar():
             return character
 
 
-def selectCharLevel(character):
+def selectCharacterLevel(character):
     while True:
         try:
             level = int(input(f"Level of {character}: "))
@@ -54,7 +54,7 @@ def checkCharacterAscension(level, ascension):
     return True if ascension in ascensionCheck[level] else False
 
 
-def selectCharAscension(character, level):
+def selectCharacterAscension(character, level):
     sectionDict = {0: 0, 1: 38, 2: 65, 3: 101, 4: 128, 5: 155, 6: 182}
     while True:
         try:
@@ -213,11 +213,11 @@ def checkArtifactLevel(artifactRarity):
     return rarityCheck[artifactRarity]
 
 
-def selectArtifactLevel(artifactRarity):
+def selectArtifactLevel(rarity):
     while True:
         try:
             level = int(input("Artifact level (must be a multiple of 4): "))
-            if level % 4 == 0 and checkArtifactLevel(artifactRarity) >= level >= 0:
+            if level % 4 == 0 and checkArtifactLevel(rarity) >= level >= 0:
                 return level
             print("Invalid artifact level. Please try again.")
         except ValueError:
@@ -256,6 +256,71 @@ def getArtifactMainstatAPI(rarity):
             return accessArtifactMainstatValues("Common.txt")
 
 
+def selectInitialSubstatAmount(rarity):
+    while True:
+        try:
+            initial = int(input("Number of initial substats: "))
+            if initial in (rarity - 2, rarity - 1):
+                return initial
+            print("Invalid number of substats. Please try again.")
+        except ValueError:
+            print("Invalid number of substats. Please try again.")
+
+
+def selectArtifactSubstats(rolls, mainstat):
+    if rolls > 4:
+        rolls = 4
+    substats = []
+    for el in range(rolls):
+        while True:
+            substat = input(f"Substat #{el + 1}: ")
+            if substat in ["HP", "ATK", "DEF", "HP%", "ATK%", "DEF%", "EM", "ER", "CR", "CD"].remove(mainstat):
+                substats.append(substat)
+                break
+            print("Invalid substat. Please try again.")
+    return substats
+
+
+def selectArtifactRollType(rarity, substat):
+    rollTypes = {1: ((1, 2), (0.8, 1.0)), 2: ((1, 2, 3), (0.7, 0.85, 1.0)), 3: ((1, 2, 3, 4), (0.7, 0.8, 0.9, 1.0)),
+                 4: ((1, 2, 3, 4), (0.7, 0.8, 0.9, 1.0)), 5: ((1, 2, 3, 4), (0.7, 0.8, 0.9, 1.0))}
+    while True:
+        try:
+            rollType = int(input(f"Type of roll for {substat} (1-2 for 1 star, 1-3 for 2 stars, 1-4 for 3-5 stars): "))
+            if rollType in rollTypes[rarity][0]:
+                return rollTypes[rarity][1][rollType - 1]
+            print("Invalid roll type. Please try again.")
+        except ValueError:
+            print("Invalid roll type. Please try again.")
+
+
+def getArtifactSubstatRolls(rarity, substats, rolls):
+    substatRolls = dict.fromkeys(substats, 1)
+    for substat in substats:
+        substatRolls[substat] = selectArtifactRollType(rarity, substat)
+
+    if rolls <= 4:
+        return substatRolls
+    rolls -= 4
+    for el in range(rolls):
+        while True:
+            substat = input("Select substat to roll into: ")
+            if substat in substats:
+                substatRolls[substat] += selectArtifactRollType(rarity, substat)
+                break
+            print("Invalid substat. Please try again.")
+    return substatRolls
+
+
+def getArtifactSubstatData(rarity, level, mainstat):
+    initialSubstats = selectInitialSubstatAmount(rarity)
+    totalRolls = initialSubstats + int(level / 4)
+    artifactSubstats = selectArtifactSubstats(totalRolls, mainstat)
+    substatRolls = getArtifactSubstatRolls(rarity, artifactSubstats, totalRolls)
+
+    return substatRolls
+
+
 def getArtifactStats(pieceType):
     print(f"\n{pieceType}:")
     pieceSet = selectArtifactSet()
@@ -267,15 +332,16 @@ def getArtifactStats(pieceType):
     return pieceSet, pieceRarity, pieceLevel, (artifactMainstat, artifactMainstatValue)
 
 
-if __name__ == "__main__":
+# main code
+def main():
     print(accessArtifactSets())
 
     # character input
     print("Character:")
     charAPI = accessCharacters()
-    selectedChar = selectChar()
-    charLevel = selectCharLevel(selectedChar)
-    ascensionSection = selectCharAscension(selectedChar, charLevel)
+    selectedChar = selectCharacter()
+    charLevel = selectCharacterLevel(selectedChar)
+    ascensionSection = selectCharacterAscension(selectedChar, charLevel)
 
     # weapon input
     print("\nWeapon:")
@@ -307,3 +373,7 @@ if __name__ == "__main__":
 
     for piece in ("Flower of Life", "Plume of Death", "Sands of Eon", "Goblet of Eonothem", "Circlet of Logos"):
         print(getArtifactStats(piece))
+
+
+if __name__ == "__main__":
+    main()
