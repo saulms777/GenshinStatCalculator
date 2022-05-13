@@ -271,22 +271,24 @@ def selectArtifactSubstats(rolls, mainstat):
     if rolls > 4:
         rolls = 4
     substats = []
+    possibleSubstats = ["HP", "ATK", "DEF", "HP%", "ATK%", "DEF%", "EM", "ER", "CR", "CD"]
+    possibleSubstats.remove(mainstat)
     for el in range(rolls):
         while True:
             substat = input(f"Substat #{el + 1}: ")
-            if substat in ["HP", "ATK", "DEF", "HP%", "ATK%", "DEF%", "EM", "ER", "CR", "CD"].remove(mainstat):
+            if substat in possibleSubstats:
                 substats.append(substat)
                 break
             print("Invalid substat. Please try again.")
     return substats
 
 
-def selectArtifactRollType(rarity, substat):
+def selectArtifactRollType(rarity):
     rollTypes = {1: ((1, 2), (0.8, 1.0)), 2: ((1, 2, 3), (0.7, 0.85, 1.0)), 3: ((1, 2, 3, 4), (0.7, 0.8, 0.9, 1.0)),
                  4: ((1, 2, 3, 4), (0.7, 0.8, 0.9, 1.0)), 5: ((1, 2, 3, 4), (0.7, 0.8, 0.9, 1.0))}
     while True:
         try:
-            rollType = int(input(f"Type of roll for {substat} (1-2 for 1 star, 1-3 for 2 stars, 1-4 for 3-5 stars): "))
+            rollType = int(input("Type of roll: "))
             if rollType in rollTypes[rarity][0]:
                 return rollTypes[rarity][1][rollType - 1]
             print("Invalid roll type. Please try again.")
@@ -295,18 +297,18 @@ def selectArtifactRollType(rarity, substat):
 
 
 def getArtifactSubstatRolls(rarity, substats, rolls):
-    substatRolls = dict.fromkeys(substats, 1)
+    substatRolls = dict.fromkeys(substats, 0)
     for substat in substats:
-        substatRolls[substat] = selectArtifactRollType(rarity, substat)
+        substatRolls[substat] += selectArtifactRollType(rarity)
 
     if rolls <= 4:
         return substatRolls
     rolls -= 4
     for el in range(rolls):
         while True:
-            substat = input("Select substat to roll into: ")
+            substat = input(f"\nRoll #{el + 1}: ")
             if substat in substats:
-                substatRolls[substat] += selectArtifactRollType(rarity, substat)
+                substatRolls[substat] += selectArtifactRollType(rarity)
                 break
             print("Invalid substat. Please try again.")
     return substatRolls
@@ -326,31 +328,35 @@ def getArtifactStats(pieceType):
     pieceSet = selectArtifactSet()
     pieceRarity = selectArtifactRarity(pieceSet)
     pieceLevel = selectArtifactLevel(pieceRarity)
-    artifactMainstat = selectArtifactMainstat(pieceType)
-    artifactMainstatValue = getArtifactMainstatAPI(pieceRarity)[artifactMainstat][int(pieceLevel / 4)]
+    pieceMainstat = selectArtifactMainstat(pieceType)
+    pieceMainstatValue = getArtifactMainstatAPI(pieceRarity)[pieceMainstat][int(pieceLevel / 4)]
+    pieceSubstats = getArtifactSubstatData(pieceRarity, pieceLevel, pieceMainstat)
 
-    return pieceSet, pieceRarity, pieceLevel, (artifactMainstat, artifactMainstatValue)
+    return pieceSet, pieceRarity, pieceLevel, (pieceMainstat, pieceMainstatValue), pieceSubstats
 
 
 # main code
 def main():
-    print(accessArtifactSets())
-
     # character input
-    print("Character:")
+    print("Character:\n")
     charAPI = accessCharacters()
     selectedChar = selectCharacter()
     charLevel = selectCharacterLevel(selectedChar)
     ascensionSection = selectCharacterAscension(selectedChar, charLevel)
 
     # weapon input
-    print("\nWeapon:")
+    print("\n\nWeapon:\n")
     weaponAPI = getWeaponAPI(selectedChar)
     selectedWeapon = selectWeapon(weaponAPI)
     weaponLevel = selectWeaponLevel(selectedWeapon)
     weaponAscension = selectWeaponAscension(selectedWeapon)
     weaponBaseATK = accessWeaponBaseATKValues()[weaponAPI[selectedWeapon][1]][
         2 * weaponAscension - checkWeaponAscension(weaponLevel, weaponAscension)]
+
+    # artifact input
+    print("\n\nArtifacts:")
+    for piece in ("Flower of Life", "Plume of Death", "Sands of Eon", "Goblet of Eonothem", "Circlet of Logos"):
+        print(getArtifactStats(piece))
 
     levelMultipliers = accessCharacterMultipliers()
     baseHP = charAPI[selectedChar][0][0] * \
@@ -366,13 +372,6 @@ def main():
     stats = {"HP": 0, "BaseATK": 0, "ATK": 0, "DEF": 0, "EM": 0, "CR": 5, "CD": 50, "HB": 0, "IHB": 0, "ER": 0, "SS": 0,
              "ANEMO": 0, "GEO": 0, "ELECTRO": 0, "DENDRO": 0, "HYDRO": 0, "PYRO": 0, "CRYO": 0, "ANEMORES": 0,
              "GEORES": 0, "ELECTRORES": 0, "DENDRORES": 0, "HYDRORES": 0, "PYRORES": 0, "CRYORES": 0}
-
-    print(baseHP)
-    print(baseATK)
-    print(baseDEF)
-
-    for piece in ("Flower of Life", "Plume of Death", "Sands of Eon", "Goblet of Eonothem", "Circlet of Logos"):
-        print(getArtifactStats(piece))
 
 
 if __name__ == "__main__":
