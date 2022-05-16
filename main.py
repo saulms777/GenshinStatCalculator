@@ -1,72 +1,77 @@
 # character functions
-def accessCharacters():
-    with open("CharacterData\\CharacterStats.txt") as file:
-        file = file.read().split("\n")
-        rawInfo = [character.split(" | ") for character in file]
+class Character:
+    def __init__(self):
+        # access character API
+        with open("CharacterData\\CharacterStats.txt") as file:
+            file = file.read().split("\n")
+            rawInfo = [character.split(" | ") for character in file]
 
-        charName = [character[0] for character in rawInfo]
-        charBaseStats = [tuple(map(float, character[1].split(" : "))) for character in rawInfo]
-        charMaxAscensionStats = [tuple(map(float, character[2].split(" : "))) for character in rawInfo]
-        charAscensionStat = [tuple([str(character[3].split(" : ")[0]), float(character[3].split(" : ")[1])])
-                             for character in rawInfo]
-        charWeapon = [tuple([str(character[4].split(" : ")[0]), int(character[4].split(" : ")[1])])
-                      for character in rawInfo]
+            charName = [character[0] for character in rawInfo]
+            charBaseStats = [tuple(map(float, character[1].split(" : "))) for character in rawInfo]
+            charMaxAscensionStats = [tuple(map(float, character[2].split(" : "))) for character in rawInfo]
+            charAscensionStat = [tuple([str(character[3].split(" : ")[0]), float(character[3].split(" : ")[1])])
+                                 for character in rawInfo]
+            charWeapon = [tuple([str(character[4].split(" : ")[0]), int(character[4].split(" : ")[1])])
+                          for character in rawInfo]
 
-        return dict(zip(charName, tuple(zip(charBaseStats, charMaxAscensionStats, charAscensionStat, charWeapon))))
+            self.characterAPI = dict(zip(charName, tuple(zip(charBaseStats, charMaxAscensionStats, charAscensionStat,
+                                                             charWeapon))))
 
+        # access character multipliers
+        with open("CharacterData\\CharacterLevelMultipliers.txt") as file:
+            file = file.read().split("\n")
+            rawInfo = [level.split(" : ") for level in file]
 
-def accessCharacterMultipliers():
-    with open("CharacterData\\CharacterLevelMultipliers.txt") as file:
-        file = file.read().split("\n")
-        rawInfo = [level.split(" : ") for level in file]
+            level = [int(level[0]) for level in rawInfo]
+            fourStar = [float(level[1]) for level in rawInfo]
+            fiveStar = [float(level[2]) for level in rawInfo]
 
-        level = [int(level[0]) for level in rawInfo]
-        fourStar = [float(level[1]) for level in rawInfo]
-        fiveStar = [float(level[2]) for level in rawInfo]
+            self.characterMultipliers = dict(zip(level, tuple(zip(fourStar, fiveStar))))
 
-        return dict(zip(level, tuple(zip(fourStar, fiveStar))))
+        self.selectedCharacter = ""
+        self.characterLevel = 0
+        self.ascensionSection = 0
 
+    def selectCharacter(self):
+        while True:
+            character = input("Select a character: ")
+            try:
+                self.characterAPI[character]
+            except KeyError:
+                print("Invalid character. Please try again.")
+            else:
+                self.selectedCharacter = character
+                break
 
-def selectCharacter():
-    while True:
-        character = input("Select a character: ")
-        try:
-            accessCharacters()[character]
-        except KeyError:
-            print("Invalid character. Please try again.")
-        else:
-            return character
+    def selectCharacterLevel(self):
+        while True:
+            try:
+                level = int(input(f"Level of {self.selectedCharacter}: "))
+                if 90 >= int(level) > 0:
+                    self.characterLevel = int(level)
+                    break
+                print("Invalid level. Please try again.")
+            except ValueError:
+                print("Invalid level. Please try again.")
 
+    def checkCharacterAscension(self, ascension):
+        ascensionCheck = {20: (0, 1), 40: (1, 2), 50: (2, 3), 60: (3, 4), 70: (4, 5), 80: (5, 6), 90: (6,)}
+        return True if ascension in ascensionCheck[self.characterLevel] else False
 
-def selectCharacterLevel(character):
-    while True:
-        try:
-            level = int(input(f"Level of {character}: "))
-            if 90 >= int(level) > 0:
-                return int(level)
-            print("Invalid level. Please try again.")
-        except ValueError:
-            print("Invalid level. Please try again.")
-
-
-def checkCharacterAscension(level, ascension):
-    ascensionCheck = {20: (0, 1), 40: (1, 2), 50: (2, 3), 60: (3, 4), 70: (4, 5), 80: (5, 6), 90: (6,)}
-    return True if ascension in ascensionCheck[level] else False
-
-
-def selectCharacterAscension(character, level):
-    sectionDict = {0: 0, 1: 38, 2: 65, 3: 101, 4: 128, 5: 155, 6: 182}
-    while True:
-        try:
-            charAscension = int(input(f"Number of ascension stars for {character}: "))
-            isValid = checkCharacterAscension(level, charAscension)
-            if 6 >= charAscension > 0:
-                section = sectionDict[charAscension]
-                if isValid:
-                    return section
-            print("Invalid number of ascension stars. Please try again.")
-        except ValueError:
-            print("Invalid number of ascension stars. Please try again.")
+    def selectCharacterAscension(self):
+        sectionDict = {0: 0, 1: 38, 2: 65, 3: 101, 4: 128, 5: 155, 6: 182}
+        while True:
+            try:
+                ascension = int(input(f"Number of ascension stars for {self.selectedCharacter}: "))
+                isValid = self.checkCharacterAscension(ascension)
+                if 6 >= ascension > 0:
+                    section = sectionDict[ascension]
+                    if isValid:
+                        self.ascensionSection = section
+                        break
+                print("Invalid number of ascension stars. Please try again.")
+            except ValueError:
+                print("Invalid number of ascension stars. Please try again.")
 
 
 # weapon functions
@@ -107,7 +112,8 @@ def accessWeaponSubstatValues():
 
 
 def getWeaponAPI(character):
-    weaponType = accessCharacters()[character][3][0]
+    char = Character()
+    weaponType = char.characterAPI[character][3][0]
     match weaponType:
         case "sword":
             return accessWeapons("Swords.txt")
@@ -339,10 +345,17 @@ def getArtifactStats(pieceType):
 def main():
     # character input
     print("Character:\n")
-    charAPI = accessCharacters()
-    selectedChar = selectCharacter()
-    charLevel = selectCharacterLevel(selectedChar)
-    ascensionSection = selectCharacterAscension(selectedChar, charLevel)
+    character = Character()
+    charAPI = character.characterAPI
+
+    character.selectCharacter()
+    selectedChar = character.selectedCharacter
+
+    character.selectCharacterLevel()
+    charLevel = character.characterLevel
+
+    character.selectCharacterAscension()
+    ascensionSection = character.ascensionSection
 
     # weapon input
     print("\n\nWeapon:\n")
@@ -358,15 +371,15 @@ def main():
     for piece in ("Flower of Life", "Plume of Death", "Sands of Eon", "Goblet of Eonothem", "Circlet of Logos"):
         print(getArtifactStats(piece))
 
-    levelMultipliers = accessCharacterMultipliers()
+    levelMultipliers = character.characterMultipliers
     baseHP = charAPI[selectedChar][0][0] * \
-        levelMultipliers[charLevel][0 if accessCharacters()[selectedChar][3][1] == 4 else 1] + \
+        levelMultipliers[charLevel][0 if character.characterAPI[selectedChar][3][1] == 4 else 1] + \
         charAPI[selectedChar][1][0] * ascensionSection / 182
     baseATK = charAPI[selectedChar][0][1] * \
-        levelMultipliers[charLevel][0 if accessCharacters()[selectedChar][3][1] == 4 else 1] + \
+        levelMultipliers[charLevel][0 if character.characterAPI[selectedChar][3][1] == 4 else 1] + \
         charAPI[selectedChar][1][1] * ascensionSection / 182 + weaponBaseATK
     baseDEF = charAPI[selectedChar][0][2] * \
-        levelMultipliers[charLevel][0 if accessCharacters()[selectedChar][3][1] == 4 else 1] + \
+        levelMultipliers[charLevel][0 if character.characterAPI[selectedChar][3][1] == 4 else 1] + \
         charAPI[selectedChar][1][2] * ascensionSection / 182
 
     stats = {"HP": 0, "BaseATK": 0, "ATK": 0, "DEF": 0, "EM": 0, "CR": 5, "CD": 50, "HB": 0, "IHB": 0, "ER": 0, "SS": 0,
