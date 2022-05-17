@@ -1,5 +1,6 @@
 # character functions
 class Character:
+    # init function
     def __init__(self):
         # access character API
         with open("CharacterData\\CharacterStats.txt") as file:
@@ -32,6 +33,7 @@ class Character:
         self.characterLevel = 0
         self.ascensionSection = 0
 
+    # select character
     def selectCharacter(self):
         while True:
             character = input("Select a character: ")
@@ -43,6 +45,7 @@ class Character:
                 self.selectedCharacter = character
                 break
 
+    # select character level
     def selectCharacterLevel(self):
         while True:
             try:
@@ -54,115 +57,121 @@ class Character:
             except ValueError:
                 print("Invalid level. Please try again.")
 
-    def checkCharacterAscension(self, ascension):
-        ascensionCheck = {20: (0, 1), 40: (1, 2), 50: (2, 3), 60: (3, 4), 70: (4, 5), 80: (5, 6), 90: (6,)}
-        return True if ascension in ascensionCheck[self.characterLevel] else False
-
+    # select character ascension and find ascension section
     def selectCharacterAscension(self):
         sectionDict = {0: 0, 1: 38, 2: 65, 3: 101, 4: 128, 5: 155, 6: 182}
+        ascensionCheck = {20: (0, 1), 40: (1, 2), 50: (2, 3), 60: (3, 4), 70: (4, 5), 80: (5, 6), 90: (6,)}
         while True:
             try:
                 ascension = int(input(f"Number of ascension stars for {self.selectedCharacter}: "))
-                isValid = self.checkCharacterAscension(ascension)
-                if 6 >= ascension > 0:
-                    section = sectionDict[ascension]
-                    if isValid:
-                        self.ascensionSection = section
-                        break
+                isValid = True if ascension in ascensionCheck[self.characterLevel] else False
+                if 6 >= ascension > 0 and isValid:
+                    self.ascensionSection = sectionDict[ascension]
+                    break
                 print("Invalid number of ascension stars. Please try again.")
             except ValueError:
                 print("Invalid number of ascension stars. Please try again.")
 
 
 # weapon functions
-def accessWeapons(API):
-    with open(f"WeaponData\\{API}") as file:
-        file = file.read().split("\n")
-        rawInfo = [weapon.split(" | ") for weapon in file]
+class Weapon:
+    # init function
+    def __init__(self, selectedCharacter):
+        # access weapon API
+        character = Character()
+        weaponType = character.characterAPI[selectedCharacter][3][0]
+        match weaponType:
+            case "sword":
+                API = "Swords.txt"
+            case "claymore":
+                API = "Claymores.txt"
+            case "polearm":
+                API = "Polearms.txt"
+            case "bow":
+                API = "Bows.txt"
+            case "catalyst":
+                API = "Catalysts.txt"
+            case _:
+                API = ""
+                print("wtf happened to your code")
+        with open(f"WeaponData\\{API}") as file:
+            file = file.read().split("\n")
+            rawInfo = [weapon.split(" | ") for weapon in file]
 
-        weaponName = [weapon[0] for weapon in rawInfo]
-        weaponRarity = [int(weapon[1]) for weapon in rawInfo]
-        weaponBaseATKType = [weapon[2] for weapon in rawInfo]
-        weaponAscensionStat = [tuple([str(weapon[3].split(" : ")[0]), float(weapon[3].split(" : ")[1])])
-                               for weapon in rawInfo]
+            weaponName = [weapon[0] for weapon in rawInfo]
+            weaponRarity = [int(weapon[1]) for weapon in rawInfo]
+            weaponBaseATKType = [weapon[2] for weapon in rawInfo]
+            weaponAscensionStat = [tuple([str(weapon[3].split(" : ")[0]), float(weapon[3].split(" : ")[1])])
+                                   for weapon in rawInfo]
 
-        return dict(zip(weaponName, tuple(zip(weaponRarity, weaponBaseATKType, weaponAscensionStat))))
+            self.weaponAPI = dict(zip(weaponName, tuple(zip(weaponRarity, weaponBaseATKType, weaponAscensionStat))))
 
+        # access weapon base ATK values
+        with open("WeaponData\\WeaponBaseATKScaling.txt") as file:
+            file = file.read().split("\n")
+            rawInfo = [rarity.split(" | ") for rarity in file]
 
-def accessWeaponBaseATKValues():
-    with open("WeaponData\\WeaponBaseATKScaling.txt") as file:
-        file = file.read().split("\n")
-        rawInfo = [rarity.split(" | ") for rarity in file]
+            baseATKtype = [rarity[0] for rarity in rawInfo]
+            ATKValues = [tuple(map(int, rarity[1].split(" : "))) for rarity in rawInfo]
 
-        baseATKtype = [rarity[0] for rarity in rawInfo]
-        ATKValues = [tuple(map(int, rarity[1].split(" : "))) for rarity in rawInfo]
+            self.weaponBaseATKValues = dict(zip(baseATKtype, ATKValues))
 
-        return dict(zip(baseATKtype, ATKValues))
+        # access weapon substat values
+        with open("WeaponData\\WeaponSubstatScaling.txt") as file:
+            file = file.read().split("\n")
+            rawInfo = [value.split(" | ") for value in file]
 
+            startingValue = [value[0] for value in rawInfo]
+            substatValues = [tuple(map(float, value[1].split(" : "))) for value in rawInfo]
 
-def accessWeaponSubstatValues():
-    with open("WeaponData\\WeaponSubstatScaling.txt") as file:
-        file = file.read().split("\n")
-        rawInfo = [value.split(" | ") for value in file]
+            self.weaponSubstatValues = dict(zip(startingValue, substatValues))
 
-        startingValue = [value[0] for value in rawInfo]
-        substatValues = [tuple(map(float, value[1].split(" : "))) for value in rawInfo]
+        self.selectedWeapon = ""
+        self.weaponLevel = 0
+        self.weaponAscension = 0
 
-        return dict(zip(startingValue, substatValues))
+    # select weapon
+    def selectWeapon(self):
+        while True:
+            weapon = input("Select a weapon: ")
+            try:
+                self.weaponAPI[weapon]
+            except KeyError:
+                print("Invalid weaon. Please try again.")
+            else:
+                self.selectedWeapon = weapon
+                break
 
+    # select weapon level
+    def selectWeaponLevel(self):
+        while True:
+            try:
+                level = int(input(f"Level of {self.selectedWeapon} (must be a multiple of 10): "))
+                if 90 >= level > 0 and level % 10 == 0:
+                    self.weaponLevel = level
+                    break
+                print("Invalid level. Please try again.")
+            except ValueError:
+                print("Invalid level. Please try again.")
 
-def getWeaponAPI(character):
-    char = Character()
-    weaponType = char.characterAPI[character][3][0]
-    match weaponType:
-        case "sword":
-            return accessWeapons("Swords.txt")
-        case "claymore":
-            return accessWeapons("Claymores.txt")
-        case "polearm":
-            return accessWeapons("Polearms.txt")
-        case "bow":
-            return accessWeapons("Bows.txt")
-        case "catalyst":
-            return accessWeapons("Catalysts.txt")
+    # select weapon ascension
+    def selectWeaponAscension(self):
+        ascensionCheck = {20: (0, 1), 40: (1, 2), 50: (2, 3), 60: (3, 4), 70: (4, 5), 80: (5, 6), 90: (6,)}
+        while True:
+            try:
+                ascension = int(input(f"Number of ascension stars for {self.selectedWeapon}: "))
+                isValid = True if ascension in ascensionCheck[self.weaponLevel] else False
+                if 6 >= ascension > 0 and isValid:
+                    self.weaponAscension = ascension
+                    break
+                print("Invalid number of ascension stars. Please try again.")
+            except ValueError:
+                print("Invalid number of ascension stars. Please try again.")
 
-
-def selectWeapon(weaponTypeAPI):
-    while True:
-        weapon = input("Select a weapon: ")
-        try:
-            weaponTypeAPI[weapon]
-        except KeyError:
-            print("Invalid weaon. Please try again.")
-        else:
-            return weapon
-
-
-def selectWeaponLevel(weapon):
-    while True:
-        try:
-            level = int(input(f"Level of {weapon} (must be a multiple of 10): "))
-            if 90 >= level > 0 and level % 10 == 0:
-                return level
-            print("Invalid level. Please try again.")
-        except ValueError:
-            print("Invalid level. Please try again.")
-
-
-def selectWeaponAscension(weapon):
-    while True:
-        try:
-            ascension = int(input(f"Number of ascension stars for {weapon}: "))
-            if 6 >= ascension > 0:
-                return ascension
-            print("Invalid number of ascension stars. Please try again.")
-        except ValueError:
-            print("Invalid level. Please try again.")
-
-
-def checkWeaponAscension(level, ascension):
-    ascensionCheck = {20: (0, 1), 40: (1, 2), 50: (2, 3), 60: (3, 4), 70: (4, 5), 80: (5, 6), 90: (6,)}
-    return 0 if ascensionCheck[level][0] == ascension else 1
+    # check weapon ascension type
+    def checkWeaponAscensionType(self, ascension):
+        ascensionCheck = {20: (0, 1), 40: (1, 2), 50: (2, 3), 60: (3, 4), 70: (4, 5), 80: (5, 6), 90: (6,)}
+        return 0 if ascensionCheck[self.weaponLevel][0] == ascension else 1
 
 
 # artifact functions
@@ -351,6 +360,8 @@ def main():
     character.selectCharacter()
     selectedChar = character.selectedCharacter
 
+    print(character.selectedCharacter)
+
     character.selectCharacterLevel()
     charLevel = character.characterLevel
 
@@ -359,12 +370,20 @@ def main():
 
     # weapon input
     print("\n\nWeapon:\n")
-    weaponAPI = getWeaponAPI(selectedChar)
-    selectedWeapon = selectWeapon(weaponAPI)
-    weaponLevel = selectWeaponLevel(selectedWeapon)
-    weaponAscension = selectWeaponAscension(selectedWeapon)
-    weaponBaseATK = accessWeaponBaseATKValues()[weaponAPI[selectedWeapon][1]][
-        2 * weaponAscension - checkWeaponAscension(weaponLevel, weaponAscension)]
+    weapon = Weapon(selectedChar)
+    weaponAPI = weapon.weaponAPI
+
+    weapon.selectWeapon()
+    selectedWeapon = weapon.selectedWeapon
+
+    weapon.selectWeaponLevel()
+    weaponLevel = weapon.weaponLevel
+
+    weapon.selectWeaponAscension()
+    weaponAscension = weapon.weaponAscension
+
+    weaponBaseATK = weapon.weaponBaseATKValues[weaponAPI[selectedWeapon][1]][
+        2 * weaponAscension - weapon.checkWeaponAscensionType(weaponAscension)]
 
     # artifact input
     print("\n\nArtifacts:")
