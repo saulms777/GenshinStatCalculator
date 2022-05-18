@@ -1,0 +1,208 @@
+def accessCharacters():
+    with open(f"CharacterData\\CharacterStats.txt") as file:
+        file = file.read().split("\n")
+        rawInfo = [character.split(" | ") for character in file]
+
+        charName = [character[0] for character in rawInfo]
+        charBaseStats = [tuple(map(float, character[1].split(" : "))) for character in rawInfo]
+        charMaxAscensionStats = [tuple(map(float, character[2].split(" : "))) for character in rawInfo]
+        charAscensionStat = [tuple([str(character[3].split(" : ")[0]), float(character[3].split(" : ")[1])])
+                             for character in rawInfo]
+        charWeapon = [tuple([str(character[4].split(" : ")[0]), int(character[4].split(" : ")[1])])
+                      for character in rawInfo]
+
+        return dict(zip(charName, tuple(zip(charBaseStats, charMaxAscensionStats, charAscensionStat, charWeapon))))
+
+
+def accessCharacterMultipliers():
+    with open("CharacterData\\CharacterLevelMultipliers.txt") as file:
+        file = file.read().split("\n")
+        rawInfo = [level.split(" : ") for level in file]
+
+        level = [int(level[0]) for level in rawInfo]
+        fourStar = [float(level[1]) for level in rawInfo]
+        fiveStar = [float(level[2]) for level in rawInfo]
+
+        return dict(zip(level, tuple(zip(fourStar, fiveStar))))
+
+
+def accessWeapons(API):
+    with open(f"WeaponData\\{API}") as file:
+        file = file.read().split("\n")
+        rawInfo = [weapon.split(" | ") for weapon in file]
+
+        weaponName = [weapon[0] for weapon in rawInfo]
+        weaponRarity = [int(weapon[1]) for weapon in rawInfo]
+        weaponBaseATKType = [weapon[2] for weapon in rawInfo]
+        weaponAscensionStat = [tuple([str(weapon[3].split(" : ")[0]), float(weapon[3].split(" : ")[1])])
+                               for weapon in rawInfo]
+
+        return dict(zip(weaponName, tuple(zip(weaponRarity, weaponBaseATKType, weaponAscensionStat))))
+
+
+def accessWeaponBaseATKValues():
+    with open("WeaponData\\WeaponBaseATKScaling.txt") as file:
+        file = file.read().split("\n")
+        rawInfo = [rarity.split(" | ") for rarity in file]
+
+        baseATKtype = [rarity[0] for rarity in rawInfo]
+        ATKValues = [tuple(map(int, rarity[1].split(" : "))) for rarity in rawInfo]
+
+        return dict(zip(baseATKtype, ATKValues))
+
+
+def accessWeaponSubstatValues():
+    with open("WeaponData\\WeaponSubstatScaling.txt") as file:
+        file = file.read().split("\n")
+        rawInfo = [value.split(" | ") for value in file]
+
+        startingValue = [value[0] for value in rawInfo]
+        substatValues = [tuple(map(float, value[1].split(" : "))) for value in rawInfo]
+
+        return dict(zip(startingValue, substatValues))
+
+
+def accessArtifactSets():
+    with open("ArtifactSets.txt") as file:
+        file = file.read().split("\n")
+        rawInfo = [artifactSet.split(" | ") for artifactSet in file]
+
+        artifactSetName = [artifactSet[0] for artifactSet in rawInfo]
+        artifact2Piece = [artifactSet[1] for artifactSet in rawInfo]
+        artifact4Piece = [artifactSet[2] for artifactSet in rawInfo]
+        artifactStats = [tuple([str(artifactSet[3].split(" : ")[0]), float(artifactSet[3].split(" : ")[1])])
+                         for artifactSet in rawInfo]
+
+        return dict(zip(artifactSetName, tuple(zip(artifact2Piece, artifact4Piece, artifactStats))))
+
+
+def checkCorrectAscension(level, ascension):
+    ascensionCheck = {20: (0, 1), 40: (1, 2), 50: (2, 3), 60: (3, 4), 70: (4, 5), 80: (5, 6), 90: (6,)}
+    return True if ascension in ascensionCheck[level] else False
+
+
+def selectChar():
+    while True:
+        character = str(input("Select a character: "))
+        try:
+            accessCharacters()[character]
+        except KeyError:
+            print("The character you chose does not exist. Please try again.")
+        else:
+            return character
+
+
+def selectCharLevel(character):
+    while True:
+        try:
+            level = int(input(f"Level of {character}: "))
+            if 90 >= int(level) > 0:
+                return int(level)
+            print("Invalid level. Please try again.")
+        except ValueError:
+            print("Invalid level. Please try again.")
+
+
+def selectCharAscension(character, level):
+    sectionDict = {0: 0, 1: 38, 2: 65, 3: 101, 4: 128, 5: 155, 6: 182}
+    while True:
+        try:
+            charAscension = int(input(f"Number of ascension stars for {character}: "))
+            isValid = checkCorrectAscension(level, charAscension)
+            if 6 >= charAscension > 0:
+                section = sectionDict[charAscension]
+                if isValid:
+                    return section
+            print("Invalid number of ascension stars. Please try again.")
+        except ValueError:
+            print("Invalid number of ascension stars. Please try again.")
+
+
+def getWeaponAPI(character):
+    weaponType = accessCharacters()[character][3][0]
+    match weaponType:
+        case "sword":
+            weapon = accessWeapons("Swords.txt")
+        case "claymore":
+            weapon = accessWeapons("Claymores.txt")
+        case "polearm":
+            weapon = accessWeapons("Polearms.txt")
+        case "bow":
+            weapon = accessWeapons("Bows.txt")
+        case "catalyst":
+            weapon = accessWeapons("Catalysts.txt")
+        case _:
+            weapon = accessWeapons("Swords.txt")
+            print("you suck at typing")
+    return weapon
+
+
+def selectWeapon(weaponTypeAPI):
+    while True:
+        weapon = str(input("Select a weapon: "))
+        try:
+            weaponTypeAPI[weapon]
+        except KeyError:
+            print("The weapon you chose does not exist. Please try again.")
+        else:
+            return weapon
+
+
+def selectWeaponLevel(weapon):
+    while True:
+        try:
+            level = int(input(f"Level of {weapon} (must be a multiple of 10): "))
+            if 90 >= level > 0 and level % 10 == 0:
+                return level
+            print("Invalid level. Please try again.")
+        except ValueError:
+            print("Invalid level. Please try again.")
+
+
+def selectWeaponAscension(weapon):
+    while True:
+        try:
+            ascension = int(input(f"Number of ascension stars for {weapon}: "))
+            if 6 >= ascension > 0:
+                return ascension
+            print("Invalid number of ascension stars. Please try again.")
+        except ValueError:
+            print("Invalid level. Please try again.")
+
+
+def checkWeaponAscension(level, ascension):
+    ascensionCheck = {20: (0, 1), 40: (1, 2), 50: (2, 3), 60: (3, 4), 70: (4, 5), 80: (5, 6), 90: (6,)}
+    return 0 if ascensionCheck[level][0] == ascension else 1
+
+
+if __name__ == "__main__":
+    charAPI = accessCharacters()
+    selectedChar = selectChar()
+    charLevel = selectCharLevel(selectedChar)
+    ascensionSection = selectCharAscension(selectedChar, charLevel)
+
+    weaponAPI = getWeaponAPI(selectedChar)
+    selectedWeapon = selectWeapon(weaponAPI)
+    weaponLevel = selectWeaponLevel(selectedWeapon)
+    weaponAscension = selectWeaponAscension(selectedWeapon)
+    weaponBaseATK = accessWeaponBaseATKValues()[weaponAPI[selectedWeapon][1]][
+        2 * weaponAscension - checkWeaponAscension(weaponLevel, weaponAscension)]
+
+    levelMultipliers = accessCharacterMultipliers()
+    baseHP = charAPI[selectedChar][0][0] * \
+        levelMultipliers[charLevel][0 if accessCharacters()[selectedChar][3][1] == 4 else 1] + \
+        charAPI[selectedChar][1][0] * ascensionSection / 182
+    baseATK = charAPI[selectedChar][0][1] * \
+        levelMultipliers[charLevel][0 if accessCharacters()[selectedChar][3][1] == 4 else 1] + \
+        charAPI[selectedChar][1][1] * ascensionSection / 182 + weaponBaseATK
+    baseDEF = charAPI[selectedChar][0][2] * \
+        levelMultipliers[charLevel][0 if accessCharacters()[selectedChar][3][1] == 4 else 1] + \
+        charAPI[selectedChar][1][2] * ascensionSection / 182
+
+    stats = {"HP": 0, "BaseATK": 0, "ATK": 0, "DEF": 0, "EM": 0, "CR": 5, "CD": 50, "HB": 0, "IHB": 0, "ER": 0, "SS": 0,
+             "ANEMO": 0, "GEO": 0, "ELECTRO": 0, "DENDRO": 0, "HYDRO": 0, "PYRO": 0, "CRYO": 0, "ANEMORES": 0,
+             "GEORES": 0, "ELECTRORES": 0, "DENDRORES": 0, "HYDRORES": 0, "PYRORES": 0, "CRYORES": 0}
+
+    print(baseHP)
+    print(baseATK)
+    print(baseDEF)
