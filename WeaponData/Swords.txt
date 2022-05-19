@@ -1,0 +1,3 @@
+Summit Shaper | 5 | 46 | ATK : 10.8
+Mistsplitter Reforged | 5 | 48 | CD : 9.6
+Skyward Blade | 5 | 46 | ER : 12
