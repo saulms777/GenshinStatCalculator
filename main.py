@@ -323,8 +323,7 @@ class Artifact:
 
         # select substats and base rolls
         def selectArtifactSubstats(self):
-            possibleSubstats = ["HP", "ATK", "DEF", "HP%", "ATK%", "DEF%", "EM", "ER", "CR", "CD"]
-            possibleSubstats.remove(self.artifactMainstat)
+            possibleSubstats = ("HP", "ATK", "DEF", "HP%", "ATK%", "DEF%", "EM", "ER", "CR", "CD")
 
             rolls = self.initialSubstatAmount + int(self.artifactLevel / 4)
             if rolls > 4:
@@ -335,7 +334,7 @@ class Artifact:
             for el in range(rolls):
                 while True:
                     substat = input(f"Substat #{el + 1}: ")
-                    if substat in possibleSubstats:
+                    if substat in possibleSubstats and substat != self.artifactMainstat:
                         substats.append(substat)
                         break
                     print("Invalid substat. Please try again.")
@@ -370,10 +369,32 @@ class Artifact:
         self.substatRolls = substats.substatRolls
 
 
+# find set bonuses
+def getSetBonuses(artifactSets):
+    if len(artifactSets) == len(set(artifactSets)):
+        return {}
+    else:
+        setNames = []
+        setAmount = []
+        for artifactSet in set(artifactSets):
+            amount = artifactSets.count(artifactSet)
+            match amount:
+                case 2 | 3:
+                    setNames.append(artifactSet)
+                    setAmount.append(2)
+                case 4 | 5:
+                    setNames.append(artifactSet)
+                    setAmount.append(4)
+                case _:
+                    pass
+
+        return dict(zip(setNames, setAmount))
+
+
 # main code
 def main():
     # character
-    print(f"Character:")
+    print("Character:")
     character = Character()
 
     character.selectCharacter()
@@ -381,7 +402,7 @@ def main():
     character.selectCharacterAscension()
 
     # weapon
-    print(f"\n\n\nWeapon:")
+    print("\n\n\nWeapon:")
     weapon = Weapon(character.selectedCharacter)
 
     weapon.selectWeapon()
@@ -390,7 +411,7 @@ def main():
     weapon.getWeaponBaseATK()
 
     # artifacts
-    print(f"\n\n\nArtifacts:")
+    print("\n\n\nArtifacts:")
     flower = Artifact("Flower of Life")
     plume = Artifact("Plume of Death")
     sands = Artifact("Sands of Eon")
@@ -398,6 +419,7 @@ def main():
     circlet = Artifact("Circlet of Logos")
 
     artifactPieces = (flower, plume, sands, goblet, circlet)
+    artifactSets = []
     for piece in artifactPieces:
         print(f"\n\n{piece.piece}:")
         piece.selectArtifactSet()
@@ -405,6 +427,8 @@ def main():
         piece.selectArtifactLevel()
         piece.selectArtifactMainstat()
         piece.getArtifactSubstatData()
+        artifactSets.append(piece.artifactSet)
+    setBonuses = getSetBonuses(artifactSets)
 
 
 if __name__ == "__main__":
