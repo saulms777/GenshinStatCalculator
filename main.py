@@ -73,6 +73,18 @@ class Character:
                 print("Invalid number of ascension stars. Please try again.")
 
 
+# get character data
+def getCharacterData():
+    print("Character:")
+    character = Character()
+
+    character.selectCharacter()
+    character.selectCharacterLevel()
+    character.selectCharacterAscension()
+
+    return character
+
+
 # weapon functions
 class Weapon:
     # init function
@@ -174,6 +186,20 @@ class Weapon:
         ascensionCheck = {20: (0, 1), 40: (1, 2), 50: (2, 3), 60: (3, 4), 70: (4, 5), 80: (5, 6), 90: (6,)}
         self.weaponBaseATK = self.weaponBaseATKValues[self.weaponAPI[self.selectedWeapon][1]][
             2 * self.weaponAscension - (0 if ascensionCheck[self.weaponLevel][0] == self.weaponAscension else 1)]
+
+
+# get weapon data
+def getWeaponData(character):
+    # weapon
+    print("\n\n\nWeapon:")
+    weapon = Weapon(character.selectedCharacter)
+
+    weapon.selectWeapon()
+    weapon.selectWeaponLevel()
+    weapon.selectWeaponAscension()
+    weapon.getWeaponBaseATK()
+
+    return weapon
 
 
 # artifact functions
@@ -391,26 +417,8 @@ def getSetBonuses(artifactSets):
         return dict(zip(setNames, setAmount))
 
 
-# main code
-def main():
-    # character
-    print("Character:")
-    character = Character()
-
-    character.selectCharacter()
-    character.selectCharacterLevel()
-    character.selectCharacterAscension()
-
-    # weapon
-    print("\n\n\nWeapon:")
-    weapon = Weapon(character.selectedCharacter)
-
-    weapon.selectWeapon()
-    weapon.selectWeaponLevel()
-    weapon.selectWeaponAscension()
-    weapon.getWeaponBaseATK()
-
-    # artifacts
+# get artifact data
+def getArtifactData():
     print("\n\n\nArtifacts:")
     flower = Artifact("Flower of Life")
     plume = Artifact("Plume of Death")
@@ -429,6 +437,15 @@ def main():
         piece.getArtifactSubstatData()
         artifactSets.append(piece.artifactSet)
     setBonuses = getSetBonuses(artifactSets)
+
+    return setBonuses, flower, plume, sands, goblet, circlet
+
+
+# main code
+def main():
+    characterData = getCharacterData()
+    weaponData = getWeaponData(characterData)
+    artifactData = getArtifactData()
 
 
 if __name__ == "__main__":
