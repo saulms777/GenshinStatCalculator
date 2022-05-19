@@ -293,7 +293,6 @@ class Artifact:
             self.artifactLevel = level
             self.artifactMainstat = mainstat
             self.initialSubstatAmount = 0
-            self.substats = []
             self.substatRolls = None
 
         # select number of initial substats
@@ -308,7 +307,21 @@ class Artifact:
                 except ValueError:
                     print("Invalid number of substats. Please try again.")
 
-        # select substats
+        # select artifact roll
+        def selectArtifactRollType(self):
+            rollTypes = {1: ((1, 2), (0.8, 1.0)), 2: ((1, 2, 3), (0.7, 0.85, 1.0)),
+                         3: ((1, 2, 3, 4), (0.7, 0.8, 0.9, 1.0)),
+                         4: ((1, 2, 3, 4), (0.7, 0.8, 0.9, 1.0)), 5: ((1, 2, 3, 4), (0.7, 0.8, 0.9, 1.0))}
+            while True:
+                try:
+                    rollType = int(input("Roll value: "))
+                    if rollType in rollTypes[self.artifactRarity][0]:
+                        return rollTypes[self.artifactRarity][1][rollType - 1]
+                    print("Invalid roll type. Please try again.")
+                except ValueError:
+                    print("Invalid roll type. Please try again.")
+
+        # select substats and base rolls
         def selectArtifactSubstats(self):
             possibleSubstats = ["HP", "ATK", "DEF", "HP%", "ATK%", "DEF%", "EM", "ER", "CR", "CD"]
             possibleSubstats.remove(self.artifactMainstat)
@@ -318,6 +331,7 @@ class Artifact:
                 rolls = 4
 
             substats = []
+            values = []
             for el in range(rolls):
                 while True:
                     substat = input(f"Substat #{el + 1}: ")
@@ -325,49 +339,33 @@ class Artifact:
                         substats.append(substat)
                         break
                     print("Invalid substat. Please try again.")
-            self.substats = substats
+                values.append(self.selectArtifactRollType())
+            self.substatRolls = dict(zip(substats, values))
 
-        # select artifact roll
-        def selectArtifactRollType(self):
-            rollTypes = {1: ((1, 2), (0.8, 1.0)), 2: ((1, 2, 3), (0.7, 0.85, 1.0)),
-                         3: ((1, 2, 3, 4), (0.7, 0.8, 0.9, 1.0)),
-                         4: ((1, 2, 3, 4), (0.7, 0.8, 0.9, 1.0)), 5: ((1, 2, 3, 4), (0.7, 0.8, 0.9, 1.0))}
-            while True:
-                try:
-                    rollType = int(input("Type of roll: "))
-                    if rollType in rollTypes[self.artifactRarity][0]:
-                        return rollTypes[self.artifactRarity][1][rollType - 1]
-                    print("Invalid roll type. Please try again.")
-                except ValueError:
-                    print("Invalid roll type. Please try again.")
-
-        # calculate total substat roll value
-        def getArtifactSubstatRolls(self):
+        # select substat rolls
+        def selectArtifactSubstatRolls(self):
             rolls = self.initialSubstatAmount + int(self.artifactLevel / 4)
-            substatRolls = dict.fromkeys(self.substats, 0)
-            for substat in self.substats:
-                substatRolls[substat] += self.selectArtifactRollType()
 
-            if rolls <= 4:
-                self.substatRolls = substatRolls
-            rolls -= 4
-
-            for el in range(rolls):
-                while True:
-                    substat = input(f"\nRoll #{el + 1}: ")
-                    if substat in self.substats:
-                        substatRolls[substat] += self.selectArtifactRollType()
-                        break
-                    print("Invalid substat. Please try again.")
-            self.substatRolls = substatRolls
+            if rolls > 4:
+                rolls -= 4
+                for el in range(rolls):
+                    while True:
+                        substat = input(f"Artifact roll #{el + 1}: ")
+                        if substat in self.substatRolls.keys():
+                            self.substatRolls[substat] += self.selectArtifactRollType()
+                            break
+                        print("Invalid substat. Please try again.")
 
     # get substats and roll value
     def getArtifactSubstatData(self):
         substats = self.Substats(self.artifactRarity, self.artifactLevel, self.artifactMainstat)
 
         substats.selectInitialSubstatAmount()
+        print("\nFor each substat, there are different values of rolls.\nEach artifact rarity has its own roll types:"
+              "\n - 1 star: 2 types\n - 2 star: 3 types\n - 3-5 star: 4 types"
+              "\nFor example, an input of 4 for a 5 star artifact substat would give it a maxroll.")
         substats.selectArtifactSubstats()
-        substats.getArtifactSubstatRolls()
+        substats.selectArtifactSubstatRolls()
 
         self.substatRolls = substats.substatRolls
 
@@ -383,7 +381,7 @@ def main():
     character.selectCharacterAscension()
 
     # weapon
-    print(f"\n\nWeapon:")
+    print(f"\n\n\nWeapon:")
     weapon = Weapon(character.selectedCharacter)
 
     weapon.selectWeapon()
@@ -392,7 +390,7 @@ def main():
     weapon.getWeaponBaseATK()
 
     # artifacts
-    print(f"\n\nArtifacts:")
+    print(f"\n\n\nArtifacts:")
     flower = Artifact("Flower of Life")
     plume = Artifact("Plume of Death")
     sands = Artifact("Sands of Eon")
@@ -401,7 +399,7 @@ def main():
 
     artifactPieces = (flower, plume, sands, goblet, circlet)
     for piece in artifactPieces:
-        print(f"\n{piece.piece}:")
+        print(f"\n\n{piece.piece}:")
         piece.selectArtifactSet()
         piece.selectArtifactRarity()
         piece.selectArtifactLevel()
