@@ -137,6 +137,16 @@ class Weapon:
 
             self.weaponSubstatValues = dict(zip(startingValue, substatValues))
 
+        # access weapon substat values for EM
+        with open("WeaponData\\WeaponSubstatScalingEM.txt") as file:
+            file = file.read().split("\n")
+            rawInfo = [value.split(" | ") for value in file]
+
+            startingValue = [value[0] for value in rawInfo]
+            substatValues = [tuple(map(float, value[1].split(" : "))) for value in rawInfo]
+
+            self.weaponSubstatValuesEM = dict(zip(startingValue, substatValues))
+
         self.selectedWeapon = ""
         self.weaponLevel = 0
         self.weaponAscension = 0
@@ -189,8 +199,12 @@ class Weapon:
 
     # calculate weapon secondary stat
     def getWeaponSubstat(self):
-        self.weaponSubstat = (self.weaponAPI[self.selectedWeapon][3][0], self.weaponSubstatValues[self.weaponAPI[
-            self.selectedWeapon][3][1]][(20, 40, 50, 60, 70, 80, 90).index(self.weaponLevel)])
+        if self.weaponAPI[self.selectedWeapon][3][0] == "EM":
+            self.weaponSubstat = (self.weaponAPI[self.selectedWeapon][3][0], self.weaponSubstatValuesEM[self.weaponAPI[
+                self.selectedWeapon][3][1]][(20, 40, 50, 60, 70, 80, 90).index(self.weaponLevel)])
+        else:
+            self.weaponSubstat = (self.weaponAPI[self.selectedWeapon][3][0], self.weaponSubstatValues[self.weaponAPI[
+                self.selectedWeapon][3][1]][(20, 40, 50, 60, 70, 80, 90).index(self.weaponLevel)])
 
 
 # get weapon data
