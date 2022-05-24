@@ -113,10 +113,9 @@ class Weapon:
             weaponName = [weapon[0] for weapon in rawInfo]
             weaponRarity = [int(weapon[1]) for weapon in rawInfo]
             weaponBaseATKType = [weapon[2] for weapon in rawInfo]
-            weaponAscensionStat = [tuple([str(weapon[3].split(" : ")[0]), float(weapon[3].split(" : ")[1])])
-                                   for weapon in rawInfo]
+            weaponSubstat = [tuple(map(str, weapon[3].split(" : "))) for weapon in rawInfo]
 
-            self.weaponAPI = dict(zip(weaponName, tuple(zip(weaponRarity, weaponBaseATKType, weaponAscensionStat))))
+            self.weaponAPI = dict(zip(weaponName, tuple(zip(weaponRarity, weaponBaseATKType, weaponSubstat))))
 
         # access weapon base ATK values
         with open("WeaponData\\WeaponBaseATKScaling.txt") as file:
@@ -142,6 +141,7 @@ class Weapon:
         self.weaponLevel = 0
         self.weaponAscension = 0
         self.weaponBaseATK = 0
+        self.weaponSubstat = ()
 
     # select weapon
     def selectWeapon(self):
@@ -187,6 +187,11 @@ class Weapon:
         self.weaponBaseATK = self.weaponBaseATKValues[self.weaponAPI[self.selectedWeapon][1]][
             2 * self.weaponAscension - (0 if ascensionCheck[self.weaponLevel][0] == self.weaponAscension else 1)]
 
+    # calculate weapon secondary stat
+    def getWeaponSubstat(self):
+        self.weaponSubstat = (self.weaponAPI[self.selectedWeapon][3][0], self.weaponSubstatValues[self.weaponAPI[
+            self.selectedWeapon][3][1]][(20, 40, 50, 60, 70, 80, 90).index(self.weaponLevel)])
+
 
 # get weapon data
 def getWeaponData(character):
@@ -198,6 +203,7 @@ def getWeaponData(character):
     weapon.selectWeaponLevel()
     weapon.selectWeaponAscension()
     weapon.getWeaponBaseATK()
+    weapon.getWeaponSubstat()
 
     return weapon
 
