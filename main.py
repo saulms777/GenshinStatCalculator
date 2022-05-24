@@ -31,7 +31,12 @@ class Character:
 
         self.selectedCharacter = ""
         self.characterLevel = 0
+        self.characterAscension = 0
         self.ascensionSection = 0
+        self.baseHP = 0
+        self.baseATK = 0
+        self.baseDEF = 0
+        self.ascensionStat = ()
 
     # select character
     def selectCharacter(self):
@@ -66,11 +71,26 @@ class Character:
                 ascension = int(input(f"Number of ascension stars for {self.selectedCharacter}: "))
                 isValid = True if ascension in ascensionCheck[self.characterLevel] else False
                 if 6 >= ascension > 0 and isValid:
+                    self.characterAscension = ascension
                     self.ascensionSection = sectionDict[ascension]
                     break
                 print("Invalid number of ascension stars. Please try again.")
             except ValueError:
                 print("Invalid number of ascension stars. Please try again.")
+
+    # calculate base stats
+    def getCharacterBaseStats(self):
+        self.baseHP = self.characterAPI[self.selectedCharacter][0][0] * self.characterMultipliers[self.characterLevel][
+            0 if self.characterAPI[self.selectedCharacter][3][1] == 4 else 1] + self.characterAPI[
+            self.selectedCharacter][1][0] * self.ascensionSection / 182
+        self.baseATK = self.characterAPI[self.selectedCharacter][0][1] * self.characterMultipliers[self.characterLevel][
+            0 if self.characterAPI[self.selectedCharacter][3][1] == 4 else 1] + self.characterAPI[
+            self.selectedCharacter][1][1] * self.ascensionSection / 182
+        self.baseDEF = self.characterAPI[self.selectedCharacter][0][2] * self.characterMultipliers[self.characterLevel][
+            0 if self.characterAPI[self.selectedCharacter][3][1] == 4 else 1] + self.characterAPI[
+            self.selectedCharacter][1][2] * self.ascensionSection / 182
+        self.ascensionStat = (self.characterAPI[self.selectedCharacter][2][0], self.characterAPI[
+            self.selectedCharacter][2][1] * (0, 1, 2, 2, 3, 4)[self.characterAscension - 1])
 
 
 # get character data
@@ -431,8 +451,6 @@ def getSetBonuses(artifactSets):
                 case 4 | 5:
                     setNames.append(artifactSet)
                     setAmount.append(4)
-                case _:
-                    pass
 
         return dict(zip(setNames, setAmount))
 
@@ -466,6 +484,10 @@ def main():
     characterData = getCharacterData()
     weaponData = getWeaponData(characterData)
     artifactData = getArtifactData()
+
+    stats = {"HP": 0, "BaseATK": 0, "ATK": 0, "DEF": 0, "EM": 0, "CR": 5, "CD": 50, "HB": 0, "IHB": 0, "ER": 0, "SS": 0,
+             "ANEMO": 0, "GEO": 0, "ELECTRO": 0, "DENDRO": 0, "HYDRO": 0, "PYRO": 0, "CRYO": 0, "ANEMORES": 0,
+             "GEORES": 0, "ELECTRORES": 0, "DENDRORES": 0, "HYDRORES": 0, "PYRORES": 0, "CRYORES": 0}
 
 
 if __name__ == "__main__":
