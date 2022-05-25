@@ -10,9 +10,9 @@ class Character:
             charName = [character[0] for character in rawInfo]
             charBaseStats = [tuple(map(float, character[1].split(" : "))) for character in rawInfo]
             charMaxAscensionStats = [tuple(map(float, character[2].split(" : "))) for character in rawInfo]
-            charAscensionStat = [tuple([str(character[3].split(" : ")[0]), float(character[3].split(" : ")[1])])
+            charAscensionStat = [([str(character[3].split(" : ")[0]), float(character[3].split(" : ")[1])])
                                  for character in rawInfo]
-            charWeapon = [tuple([str(character[4].split(" : ")[0]), int(character[4].split(" : ")[1])])
+            charWeapon = [([str(character[4].split(" : ")[0]), int(character[4].split(" : ")[1])])
                           for character in rawInfo]
 
             self.characterAPI = dict(zip(charName, tuple(zip(charBaseStats, charMaxAscensionStats, charAscensionStat,
@@ -101,6 +101,7 @@ def getCharacterData():
     character.selectCharacter()
     character.selectCharacterLevel()
     character.selectCharacterAscension()
+    character.getCharacterBaseStats()
 
     return character
 
@@ -219,12 +220,12 @@ class Weapon:
 
     # calculate weapon secondary stat
     def getWeaponSubstat(self):
-        if self.weaponAPI[self.selectedWeapon][3][0] == "EM":
-            self.weaponSubstat = (self.weaponAPI[self.selectedWeapon][3][0], self.weaponSubstatValuesEM[self.weaponAPI[
-                self.selectedWeapon][3][1]][(20, 40, 50, 60, 70, 80, 90).index(self.weaponLevel)])
+        if self.weaponAPI[self.selectedWeapon][2][0] == "EM":
+            self.weaponSubstat = (self.weaponAPI[self.selectedWeapon][2][0], self.weaponSubstatValuesEM[self.weaponAPI[
+                self.selectedWeapon][2][1]][(20, 40, 50, 60, 70, 80, 90).index(self.weaponLevel)])
         else:
-            self.weaponSubstat = (self.weaponAPI[self.selectedWeapon][3][0], self.weaponSubstatValues[self.weaponAPI[
-                self.selectedWeapon][3][1]][(20, 40, 50, 60, 70, 80, 90).index(self.weaponLevel)])
+            self.weaponSubstat = (self.weaponAPI[self.selectedWeapon][2][0], self.weaponSubstatValues[self.weaponAPI[
+                self.selectedWeapon][2][1]][(20, 40, 50, 60, 70, 80, 90).index(self.weaponLevel)])
 
 
 # get weapon data
@@ -255,11 +256,11 @@ class Artifact:
             artifactRarities = [tuple(map(int, artifactSet[1].split(" : "))) for artifactSet in rawInfo]
             artifact2Piece = [artifactSet[2] for artifactSet in rawInfo]
             artifact4Piece = [artifactSet[3] for artifactSet in rawInfo]
-            artifactStats = [tuple([tuple([str(stat.split(" / ")[0]), float(stat.split(" / ")[1])])
-                                    for stat in artifactSet[4].split(" : ")]) for artifactSet in rawInfo]
+            artifactStats = [([([str(stat.split(" / ")[0]), float(stat.split(" / ")[1])])
+                               for stat in artifactSet[4].split(" : ")]) for artifactSet in rawInfo]
 
-            self.artifactSets = dict(zip(artifactSetName, tuple(zip(artifactRarities, artifact2Piece, artifact4Piece,
-                                                                    artifactStats))))
+            self.artifactSets = dict(zip(artifactSetName, (zip(artifactRarities, artifact2Piece, artifact4Piece,
+                                                               artifactStats))))
 
         self.piece = piece
         self.artifactSet = ""
@@ -267,6 +268,7 @@ class Artifact:
         self.artifactLevel = 0
         self.artifactMainstat = ""
         self.mainstatValues = None
+        self.mainstatValue = 0
         self.substatRolls = None
 
     # select artifact set
@@ -350,6 +352,10 @@ class Artifact:
             levelValues = [tuple(map(float, mainstat[1].split(" : "))) for mainstat in rawInfo]
 
             self.mainstatValues = dict(zip(mainstat, levelValues))
+
+    # get mainstat value
+    def getArtifactMainstatValue(self):
+        self.mainstatValue = self.mainstatValues[self.artifactMainstat][int(self.artifactLevel / 4)]
 
     # substat inner class
     class Substats:
@@ -436,12 +442,13 @@ class Artifact:
 
 
 # find set bonuses
-def getSetBonuses(artifactSets):
+def getSetBonuses(artifactSets, artifactSetAPI):
     if len(artifactSets) == len(set(artifactSets)):
-        return {}
+        return ()
     else:
         setNames = []
         setAmount = []
+        setEffect = []
         for artifactSet in set(artifactSets):
             amount = artifactSets.count(artifactSet)
             match amount:
@@ -451,8 +458,10 @@ def getSetBonuses(artifactSets):
                 case 4 | 5:
                     setNames.append(artifactSet)
                     setAmount.append(4)
+            for effect in artifactSetAPI[artifactSet][3]:
+                setEffect.append((effect[0], effect[1]))
 
-        return dict(zip(setNames, setAmount))
+        return tuple(setEffect), dict(zip(setNames, setAmount))
 
 
 # get artifact data
@@ -472,9 +481,11 @@ def getArtifactData():
         piece.selectArtifactRarity()
         piece.selectArtifactLevel()
         piece.selectArtifactMainstat()
+        piece.accessArtifactMainstatValues()
+        piece.getArtifactMainstatValue()
         piece.getArtifactSubstatData()
         artifactSets.append(piece.artifactSet)
-    setBonuses = getSetBonuses(artifactSets)
+    setBonuses = getSetBonuses(artifactSets, flower.artifactSets)
 
     return setBonuses, flower, plume, sands, goblet, circlet
 
@@ -484,10 +495,60 @@ def main():
     characterData = getCharacterData()
     weaponData = getWeaponData(characterData)
     artifactData = getArtifactData()
+    stats = {"HP": characterData.baseHP, "BaseATK": characterData.baseATK + weaponData.weaponBaseATK,
+             "ATK": characterData.baseATK + weaponData.weaponBaseATK, "DEF": characterData.baseDEF, "EM": 0, "CR": 5,
+             "CD": 50, "HB": 0, "IHB": 0, "ER": 100, "SS": 0, "ANEMO": 0, "GEO": 0, "ELECTRO": 0, "DENDRO": 0,
+             "HYDRO": 0, "PYRO": 0, "CRYO": 0, "ANEMORES": 0, "GEORES": 0, "ELECTRORES": 0, "DENDRORES": 0,
+             "HYDRORES": 0, "PYRORES": 0, "CRYORES": 0}
 
-    stats = {"HP": 0, "BaseATK": 0, "ATK": 0, "DEF": 0, "EM": 0, "CR": 5, "CD": 50, "HB": 0, "IHB": 0, "ER": 0, "SS": 0,
-             "ANEMO": 0, "GEO": 0, "ELECTRO": 0, "DENDRO": 0, "HYDRO": 0, "PYRO": 0, "CRYO": 0, "ANEMORES": 0,
-             "GEORES": 0, "ELECTRORES": 0, "DENDRORES": 0, "HYDRORES": 0, "PYRORES": 0, "CRYORES": 0}
+    # calculate character ascension stats
+    match characterData.ascensionStat[0]:
+        case "HP%":
+            stats["HP"] += characterData.baseHP * characterData.ascensionStat[1] / 100
+        case "ATK%":
+            stats["ATK"] += (characterData.baseATK + weaponData.weaponBaseATK) * characterData.ascensionStat[1] / 100
+        case "DEF%":
+            stats["DEF"] += characterData.baseDEF * characterData.ascensionStat[1] / 100
+        case _:
+            stats[characterData.ascensionStat[0]] += characterData.ascensionStat[1]
+
+    # calculate weapon secondary stats
+    match weaponData.weaponSubstat[0]:
+        case "HP%":
+            stats["HP"] += characterData.baseHP * weaponData.weaponSubstat[1] / 100
+        case "ATK%":
+            stats["ATK"] += (characterData.baseATK + weaponData.weaponBaseATK) * weaponData.weaponSubstat[1] / 100
+        case "DEF%":
+            stats["DEF"] += characterData.baseDEF * weaponData.weaponSubstat[1] / 100
+        case _:
+            stats[weaponData.weaponSubstat[0]] += weaponData.weaponSubstat[1]
+
+    # calculate artifact set stats
+    if artifactData[0] != ():
+        for effect in artifactData[0][0]:
+            match effect[0]:
+                case "HP%":
+                    stats["HP"] += characterData.baseHP * effect[1] / 100
+                case "ATK%":
+                    stats["ATK"] += (characterData.baseATK + weaponData.weaponBaseATK) * effect[1] / 100
+                case "DEF%":
+                    stats["DEF"] += characterData.baseDEF * effect[1] / 100
+                case _:
+                    stats[effect[0]] += effect[1]
+
+    # calculate artifact mainstats
+    for piece in artifactData[1:]:
+        match piece.artifactMainstat:
+            case "HP%":
+                stats["HP"] += characterData.baseHP * piece.mainstatValue / 100
+            case "ATK%":
+                stats["ATK"] += (characterData.baseATK + weaponData.weaponBaseATK) * piece.mainstatValue / 100
+            case "DEF%":
+                stats["DEF"] += characterData.baseDEF * piece.mainstatValue / 100
+            case _:
+                stats[piece.artifactMainstat] += piece.mainstatValue
+
+    print(stats)
 
 
 if __name__ == "__main__":
